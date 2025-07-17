@@ -1,0 +1,227 @@
+P_1:
+
+use pandemic;
+
+CREATE TABLE infectious_cases (
+    Entity VARCHAR(100),
+    Code CHAR(3),
+    Year INT,
+    Number_yaws INT NULL,
+    polio_cases INT NULL,
+    cases_guinea_worm INT NULL,
+    Number_rabies FLOAT NULL,
+    Number_malaria FLOAT NULL,
+    Number_hiv FLOAT NULL,
+    Number_tuberculosis FLOAT NULL,
+    Number_smallpox FLOAT NULL,
+    Number_cholera_cases INT NULL
+);
+
+
+P_2.1:
+SELECT COUNT(*) FROM infectious_cases;
+
+P_2.2:
+
+CREATE TABLE country (
+    country_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100),
+    code CHAR(3) DEFAULT NULL
+)
+
+P_2.3:
+
+INSERT INTO country (name, code)
+SELECT DISTINCT Entity, Code
+FROM infectious_cases;
+
+
+P_2.4:
+
+select * from country;
+
+P_2.5:
+CREATE TABLE disease (
+    disease_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50)
+);
+
+
+P_2.6:
+INSERT INTO disease (name) 
+VALUES ('yaws'), ('polio'), ('guinea_worm'), 
+('rabies'), ('malaria'), ('hiv'), ('tuberculosis'), 
+('smallpox'), ('cholera')
+
+
+P_2.7:
+SELECT * FROM disease
+
+P_2.8:
+DROP TABLE IF EXISTS case_report;
+
+CREATE TABLE case_report (
+    report_id INT AUTO_INCREMENT PRIMARY KEY,
+    country_id INT NOT NULL,
+    disease_id INT NOT NULL,
+    year INT NOT NULL,
+    cases FLOAT,
+    FOREIGN KEY (country_id) REFERENCES country(country_id),
+    FOREIGN KEY (disease_id) REFERENCES disease(disease_id)
+);
+
+
+P_2.9:
+INSERT INTO case_report (country_id, disease_id, year, cases)
+SELECT
+  c.country_id,
+  1,                      -- disease_id for Yaws
+  i.Year,
+  i.Number_yaws
+FROM infectious_cases i
+JOIN country c ON i.Code = c.code
+WHERE i.Number_yaws IS NOT NULL;
+
+
+P_2.10:
+
+INSERT INTO case_report (country_id, disease_id, year, cases)
+SELECT
+  c.country_id,
+  2,                      -- disease_id for Polio
+  i.Year,
+  i.polio_cases
+FROM infectious_cases i
+JOIN country c ON i.Code = c.code
+WHERE i.polio_cases IS NOT NULL;
+
+
+
+P_2.11:
+INSERT INTO case_report (country_id, disease_id, year, cases)
+SELECT
+  c.country_id,
+  3,                      -- disease_id for Guinea_worm
+  i.Year,
+  i.cases_guinea_worm
+FROM infectious_cases i
+JOIN country c ON i.Code = c.code
+WHERE i.cases_guinea_worm IS NOT NULL;
+
+P_2.12:
+INSERT INTO case_report (country_id, disease_id, year, cases)
+SELECT
+  c.country_id,
+  5,                      -- disease_id for Rabies
+  i.Year,
+  i.number_rabies
+FROM infectious_cases i
+JOIN country c ON i.Code = c.code
+WHERE i.number_rabies IS NOT NULL;
+
+
+P_2.13:
+INSERT INTO case_report (country_id, disease_id, year, cases)
+SELECT
+  c.country_id,
+  5,                      -- disease_id for Malaria
+  i.Year,
+  i.number_malaria
+FROM infectious_cases i
+JOIN country c ON i.Code = c.code
+WHERE i.number_malaria IS NOT NULL;
+
+P_2.14:
+
+INSERT INTO case_report (country_id, disease_id, year, cases)
+SELECT
+  c.country_id,
+  6,                      -- disease_id for Hiv
+  i.Year,
+  i.number_hiv
+FROM infectious_cases i
+JOIN country c ON i.Code = c.code
+WHERE i.number_hiv IS NOT NULL;
+
+
+
+P_2.15:
+INSERT INTO case_report (country_id, disease_id, year, cases)
+SELECT
+  c.country_id,
+  7,                      -- disease_id for Tuberculosis
+  i.Year,
+  i.number_tuberculosis
+FROM infectious_cases i
+JOIN country c ON i.Code = c.code
+WHERE i.number_tuberculosis IS NOT NULL;
+
+P_2.16:
+INSERT INTO case_report (country_id, disease_id, year, cases)
+SELECT
+  c.country_id,
+  8,                      -- disease_id for Smallpox
+  i.Year,
+  i.number_smallpox
+FROM infectious_cases i
+JOIN country c ON i.Code = c.code
+WHERE i.number_smallpox IS NOT NULL;
+
+P_2.17:
+
+INSERT INTO case_report (country_id, disease_id, year, cases)
+SELECT
+  c.country_id,
+  9,                      -- disease_id for Cholera
+  i.Year,
+  i.number_cholera_cases
+FROM infectious_cases i
+JOIN country c ON i.Code = c.code
+WHERE i.number_cholera_cases IS NOT NULL;
+
+P_2.18:
+select * from case_report;
+
+P_3:
+Таблиця case_report — це оптимальне, нормалізоване представлення даних, яке спрощує аналіз завдяки унікальним данним.
+
+SELECT 
+  c.name,c.code,
+  AVG(r.cases) AS avg_rabies,
+  MIN(r.cases) AS min_rabies,
+  MAX(r.cases) AS max_rabies,
+  SUM(r.cases) AS total_rabies
+FROM case_report r
+JOIN country c on c.country_id = r.country_id
+WHERE r.disease_id = 5 AND r.cases IS NOT NULL
+GROUP BY c.country_id
+ORDER BY avg_rabies DESC
+LIMIT 10;
+
+P_4:
+
+SELECT 
+        year, 
+        MAKEDATE(year, 1) AS start_year, 
+        CURDATE() AS cur_date,
+		TIMESTAMPDIFF(YEAR, MAKEDATE(year, 1), CURDATE()) AS years_diff
+    FROM
+        case_report;
+
+
+P_5:
+
+DROP FUNCTION IF EXISTS CalculateDiffYear;
+
+DELIMITER //
+CREATE FUNCTION CalculateDiffYear(input_year INT)
+RETURNS INT
+DETERMINISTIC 
+BEGIN
+    DECLARE result INT;
+    SET result = TIMESTAMPDIFF(YEAR, MAKEDATE(input_year, 1), CURDATE());
+    RETURN result;
+END //
+DELIMITER ;
+
+SELECT CalculateDiffYear(2010);
